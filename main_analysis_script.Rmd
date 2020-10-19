@@ -1,21 +1,20 @@
 ---
-title: "clbn mutant vs. wildtype microarray analysis"
+title: "main analysis scripts"
 author: "Ying Ge"
-date: "2018/1/21"
+date: "2020.10.19"
 output: html_document
 ---
 
-email: geying.tju@gmail.com
-
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
-## Install packages required
+# Install packages required
 
-```{r, eval=FALSE}
-#options("repos"= c(CRAN="https://mirrors.tuna.tsinghua.edu.cn/CRAN/"))
-#options(BioC_mirror="http://mirrors.ustc.edu.cn/bioc/")
+```{r eval=FALSE}
+options("repos"= c(CRAN="https://mirrors.tuna.tsinghua.edu.cn/CRAN/"))
+options(BioC_mirror="http://mirrors.tuna.tsinghua.edu.cn/bioconductor/")
+
 devtools::install_git('https://github.com/GuangchuangYu/clusterProfiler')
 BiocManager::install("clusterProfiler", version = "3.8")
 BiocManager::install("affy")
@@ -28,15 +27,15 @@ install.packages("DT")
 ```
 
 ```{r}
-Sys.setenv(LANGUAGE = "en") #显示英文报错信息
-options(stringsAsFactors = FALSE) #禁止chr转成factor
+Sys.setenv(LANGUAGE = "en")
+options(stringsAsFactors = FALSE)
 ```
 
-## QC
+# QC
 
-The raw microarray data was deposited under the NCBI GEO database [GSE125032](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE125032).
+The raw microarray data was deposited under the EBI ArrayExpress  [E-MEXP-1817](https://www.ebi.ac.uk/arrayexpress/experiments/E-MEXP-1817/?query=Mortin).
 
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=10, fig.height=10}
 library(affy)
 (AffyData <- ReadAffy())
 
@@ -51,10 +50,10 @@ deg <- AffyRNAdeg(AffyData)
 plotAffyRNAdeg(deg) 
 
 #Pairwise MA plots
-#MAplot(AffyData, pairs=TRUE, plot.method="smoothScatter")
+MAplot(AffyData, pairs=TRUE, plot.method="smoothScatter")
 ```
 
-## Convert raw probe intensities to expression values
+# Convert raw probe intensities to expression values
 
 ```{r}
 normmethod <- "rma"
@@ -78,13 +77,13 @@ boxplot(exp.eset)
 title("after")
 par(xpd=FALSE)
 
-write.csv(exp.eset, file="Output/signal_probeset.csv", quote = F)
+write.csv(exp.eset, file="Output/Table/signal_probeset.csv", quote = F)
 ```
 
-### Add gene symbol to expression values
+## Add gene symbol to expression values
 
 ```{r}
-eset <- read.csv("Output/signal_probeset.csv", row.names = 1)
+eset <- read.csv("Output/Table/signal_probeset.csv", row.names = 1)
 dim(eset)
 library(AnnotationDbi)
 library(drosophila2.db)
@@ -107,14 +106,14 @@ dim(eset_uniq)
 # set gene symbol as rowname
 rownames(eset_uniq) <- eset_uniq$SYMBOL
 eset_uniq <- subset(eset_uniq, select = -SYMBOL)
-write.csv(eset_uniq, file="Output/signal_gsym.csv",row.names = T,quote = F)
+write.csv(eset_uniq, file="Output/Table/signal_gsym.csv",row.names = T,quote = F)
 ```
 
-## Statistics for differential expression
+# Statistics for differential expression
 
 ```{r}
 library(limma)
-eset_uniq <- read.csv("signal_gsym.csv", row.names = 1)
+eset_uniq <- read.csv("Output/Table/signal_gsym.csv", row.names = 1)
 
 mulg.design <- model.matrix(~ 0 + factor(c(1,1,1,2,2,2))) 
 colnames(mulg.design) <- c("C", "E")
@@ -126,14 +125,14 @@ mulg.fit <- eBayes(mulg.fit)
 results <- decideTests(mulg.fit)
 summary(results)
 
-write.csv(topTable(mulg.fit, coef=1, number = nrow(mulg.fit), adjust="BH"), file="Output/limma_output.csv")
+write.csv(topTable(mulg.fit, coef=1, number = nrow(mulg.fit), adjust="BH"), file="Output/Table/limma_output.csv")
 ```
 
-### Differential expression genes
+## Differential expression genes
 
 ```{r}
 # check the number of differentially expressed genes
-allgeneslimma <- read.csv("Output/limma_output.csv", row.names = 1)
+allgeneslimma <- read.csv("Output/Table/limma_output.csv", row.names = 1)
 
 allgeneslimma$threshold <- as.factor(
   ifelse(allgeneslimma$adj.P.Val <= 0.05 & abs(allgeneslimma$logFC) >= 1, "DEG", "Ambiguous"))
@@ -146,21 +145,21 @@ DEG_sortbyFC <- DEG[order(abs(DEG$logFC), decreasing = T),]
 
 eset_DEG <- eset_uniq[rownames(DEG_sortbyFC),] #sorted by abs(FC) and p <= 0.05
 head(eset_DEG)
-write.csv(eset_DEG, "Output/DEG_signal.csv", quote = F, row.names = T)
+write.csv(eset_DEG, "Output/Table/DEG_signal.csv", quote = F, row.names = T)
 ```
 
-### How many genes in Drosophila
+## How many genes in Drosophila
 
 Download dmel-all-r6.25.gtf.gz file from flybase: <ftp://ftp.flybase.net/releases/FB2018_06/dmel_r6.25/gtf/dmel-all-r6.25.gtf.gz>
 
 ```{r}
-dmgtf <- read.table("Data/dmel-all-r6.25.gtf.gz", sep = "\t")
+dmgtf <- read.table("Input/dmel-all-r6.25.gtf.gz", sep = "\t")
 dmgene <- dmgtf[dmgtf$V3 == "gene",]
 dim(dmgene)
 12874/nrow(dmgene)
 ```
 
-### Add limma output to GO and GO term
+## Add limma output to GO and GO term
 
 ```{r}
 library(msigdbr)
@@ -168,9 +167,10 @@ library(msigdbr)
 C5 <- msigdbr(species = "Drosophila melanogaster", 
              category = "C5") 
 head(C5)
+library(dplyr)
 gsym.GO.term <- select(C5, gene_symbol, gs_name, gs_subcat, human_gene_symbol)
 
-allgeneslimma <- read.csv("Output/limma_output.csv", row.names = 1)
+allgeneslimma <- read.csv("Output/Table/limma_output.csv", row.names = 1)
 allgeneslimma$gene_symbol <- row.names(allgeneslimma)
 
 # add logFC
@@ -200,14 +200,14 @@ gsym.GO.term.up <- gsym.GO.term[grep(pattern="Increase", gsym.GO.term$threshold)
 gsym.GO.term.down <- gsym.GO.term[grep(pattern="Decrease", gsym.GO.term$threshold),]
 
 # Table S1
-write.csv(gsym.GO.term.up, "Output/gsym.GO.term.up.csv", quote = F, row.names = F)
-write.csv(gsym.GO.term.down, "Output/gsym.GO.term.down.csv", quote = F, row.names = F)
+write.csv(gsym.GO.term.up, "Output/Table/gsym.GO.term.up.csv", quote = F, row.names = F)
+write.csv(gsym.GO.term.down, "Output/Table/gsym.GO.term.down.csv", quote = F, row.names = F)
 ```
 
-## GSEA
+# GSEA
 
 ```{r}
-allgeneslimma <- read.csv("Output/limma_output.csv", row.names = 1)
+allgeneslimma <- read.csv("Output/Table/limma_output.csv", row.names = 1)
 dim(allgeneslimma)
 gsym.fc <- data.frame(gsym = row.names(allgeneslimma), logFC = allgeneslimma$logFC)
 
@@ -217,32 +217,34 @@ gene.expr <- gsym.fc$logFC
 names(gene.expr) <- gsym.fc$gsym
 ```
 
-### GSEA with C5
-
-https://guangchuangyu.github.io/cn/2018/11/msigdf_clusterprofiler/
+## GSEA with C5
 
 ```{r}
 library(clusterProfiler)
 library(msigdbr)
 category <- "C5"
-category <- msigdbr(species = "Drosophila melanogaster", 
+gmt <- msigdbr(species = "Drosophila melanogaster", 
              category = category)
-category <- category[, c(1, 8)]
+gmt2 <- gmt%>%
+  dplyr::select(gs_name, gene_symbol, gs_cat)
 
-y <- GSEA(gene.expr, TERM2GENE = category, pvalueCutoff =1)
+y <- GSEA(gene.expr, pvalueCutoff = 1,
+          TERM2GENE = gmt2[, 1:2],
+          TERM2NAME = gmt2[, c(1, 3)])
+
 dim(y@result[y@result$pvalue <= 0.01, ])
 
 # Table S2
-write.table(y@result[y@result$pvalue <= 0.01, ], "Output/gsea_C5_output.txt" , sep = "\t", quote = F, row.names = F)
+write.table(y@result[y@result$pvalue <= 0.01, ], "Output/Table/gsea_C5_output.txt" , sep = "\t", quote = F, row.names = F)
 ```
 
-### Draw prety GSEA bubbles
+## Draw prety GSEA bubbles
 
 ```{r, fig.width=12, fig.height=20}
 library(stringr)
 library(ggplot2)
 
-x <- read.table("Output/gsea_C5_output.txt", sep = "\t", header = T, row.names = 1)
+x <- read.table("Output/Table/gsea_C5_output.txt", sep = "\t", header = T, row.names = 1)
 x <- x[order(x$enrichmentScore, decreasing = T),]
 x <- x[c(1:15,(nrow(x)-14):nrow(x)),]
 
@@ -266,22 +268,23 @@ ggplot(sortx, aes(enrichmentScore, pathway, colour = enrichmentScore ))+
   labs(colour = "Enrichment Score", size = "-Log10 (P-value)") +
   theme(legend.key = element_blank())
 
-ggsave("Figure/GSEA_bubbles.pdf", width = 10, height = 12)
+ggsave("Output/Figure/GSEA_bubbles.pdf", width = 10, height = 12)
+ggsave("Output/Figure/GSEA_bubbles.png", width = 12, height = 10)
 ```
 
-## Heatmap for mitochondial genes from Dong Li
+# Heatmap for mitochondial genes from Dong Li
 
 ```{r}
 library(pheatmap)
-selectgenesID <- read.table("Data/mitoch_geneID.txt")
+selectgenesID <- read.table("Input/mitoch_geneID.txt")
 
-eset_DEG <- read.csv("Output/DEG_signal.csv", row.names = 1)
+eset_DEG <- read.csv("Output/Table/DEG_signal.csv", row.names = 1)
 eset_selectgenes <- eset_DEG[row.names(eset_DEG) %in% selectgenesID$V1, ]
 
 setdiff(selectgenesID$V1, rownames(eset_selectgenes))
 selectgenesID <- union(selectgenesID$V1, rownames(eset_selectgenes))
 
-eset_uniq <- read.csv("Output/signal_gsym.csv", row.names = 1)
+eset_uniq <- read.csv("Output/Table/signal_gsym.csv", row.names = 1)
 eset_signaling <- eset_uniq[row.names(eset_uniq) %in% selectgenesID, ]
 dim(eset_signaling)
 
@@ -304,17 +307,17 @@ pheatmap <- pheatmap(eset_signaling,cellwidth = 20, cellheight = 12, fontsize = 
          #treeheight_col = "0",
          border_color = "NA",
          silent=T, 
-         filename = "Figure/heatmap_mitoch_scale.pdf")
+         filename = "Output/Figure/heatmap_mitoch_scale.png")
 ```
 
-![](/Figure/heatmap_mitoch_scale.pdf)
+![](/Figure/heatmap_mitoch_scale.png)
 
-## Draw volcano plot with mitochondial genes
+# Draw volcano plot with mitochondial genes
 
 ```{r, fig.width=6, fig.height=4}
 library(ggrepel)
 
-allgeneslimma <- read.csv("Output/limma_output.csv", row.names = 1)
+allgeneslimma <- read.csv("Output/Table/limma_output.csv", row.names = 1)
 
 # differentially expressed genes
 allgeneslimma$threshold <- as.factor(
@@ -375,7 +378,8 @@ pvol <- p + geom_text_repel(data = subset(selectgenes, logFC> 0),
                           size = 4,
                           show.legend = FALSE)
 pvol
-ggsave("Figure/valcono.pdf", width = 6, height = 4)
+ggsave("Output/Figure/valcono.pdf", width = 6, height = 4)
+ggsave("Output/Figure/valcono.png", width = 6, height = 4)
 ```
 
 ```{r}

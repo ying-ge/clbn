@@ -282,9 +282,10 @@ ggplot(sortx, aes(enrichmentScore, pathway, colour = enrichmentScore ))+
   theme(legend.key = element_blank())
 
 ggsave("Output/Figure/GSEA_bubbles.pdf", width = 10, height = 12)
+ggsave("Output/Figure/GSEA_bubbles.png", width = 12, height = 10)
 ```
 
-![](Output/Figure/GSEA_bubbles.pdf)
+![](Output/Figure/GSEA_bubbles.png)
 
 ## :five: Heatmap for mitochondial genes from Dong Li
 
@@ -321,10 +322,10 @@ pheatmap <- pheatmap(eset_signaling,cellwidth = 20, cellheight = 12, fontsize = 
          #treeheight_col = "0",
          border_color = "NA",
          silent=T, 
-         filename = "Output/Figure/heatmap_mitoch_scale.pdf")
+         filename = "Output/Figure/heatmap_mitoch_scale.png")
 ```
 
-![](Output/Figure/heatmap_mitoch_scale.pdf)
+![](Output/Figure/heatmap_mitoch_scale.png)
 
 ## :six: Draw volcano plot with mitochondial genes
 
@@ -393,9 +394,10 @@ pvol <- p + geom_text_repel(data = subset(selectgenes, logFC> 0),
                           show.legend = FALSE)
 pvol
 ggsave("Output/Figure/valcono.pdf", width = 6, height = 4)
+ggsave("Output/Figure/valcono.png", width = 6, height = 4)
 ```
 
-![](Output/Figure/valcono.pdf)
+![](Output/Figure/valcono.png)
 
 ## :+1: Citation
 
