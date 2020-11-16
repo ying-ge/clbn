@@ -26,6 +26,7 @@ If the code is helpful to you, please kindly cite our paper as:
     number = {10},
     doi = {10.1371/journal.pgen.1009140}
     }
+Version 1.0, used in this paper, is archived at [![DOI](https://zenodo.org/badge/225515906.svg)](https://zenodo.org/badge/latestdoi/225515906)
 
 ## :open_file_folder:Input
 
