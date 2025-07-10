@@ -1,4 +1,4 @@
-# main analysis scripts
+# Main Analysis Scripts
 
 ## :dart: Aim
 
@@ -40,7 +40,7 @@ Version 1.0, used in this paper, is archived at [![DOI](https://zenodo.org/badge
 - Gene annotation:  dmel-all-r6.25.gtf.gz was downloaded from flybase: <ftp://ftp.flybase.net/releases/FB2018_06/dmel_r6.25/gtf/dmel-all-r6.25.gtf.gz>
 - Selected genes: `mitoch_geneID.txt`
 
-## :file_folder: output
+## :file_folder: Output
 
 - Table
     - `DEG_signal.csv`
