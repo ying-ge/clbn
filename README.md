@@ -314,7 +314,7 @@ ggsave("Output/Figure/GSEA_bubbles.pdf", width = 10, height = 12)
 ggsave("Output/Figure/GSEA_bubbles.png", width = 12, height = 10)
 ```
 
-![image](https://github.com/ying-ge/clbn/Output/Figure/GSEA_bubbles.png)
+![image](Output/Figure/GSEA_bubbles.png)
 
 ## :five: Heatmap for mitochondial genes from Dong Li
 
@@ -354,7 +354,7 @@ pheatmap <- pheatmap(eset_signaling,cellwidth = 20, cellheight = 12, fontsize = 
          filename = "Output/Figure/heatmap_mitoch_scale.png")
 ```
 
-![image](https://github.com/ying-ge/clbn/Output/Figure/heatmap_mitoch_scale.png)
+![image](Output/Figure/heatmap_mitoch_scale.png)
 
 ## :six: Draw volcano plot with mitochondial genes
 
@@ -426,7 +426,7 @@ ggsave("Output/Figure/valcono.pdf", width = 6, height = 4)
 ggsave("Output/Figure/valcono.png", width = 6, height = 4)
 ```
 
-![image](https://github.com/ying-ge/clbn/Output/Figure/valcono.png)
+![image](Output/Figure/valcono.png)
 
 ## :coffee: Acknowledgements
 
